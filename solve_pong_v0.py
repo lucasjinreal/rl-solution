@@ -31,6 +31,8 @@ def build_model(observation_shape, action_dim):
 
 
 def policy_gradient(is_train=True):
+    if not os.path.exists('./out_of_box_models'):
+        os.mkdir('./out_of_box_models')
     env = gym.make('Pong-v0')
     env.seed(1)
     env = env.unwrapped
@@ -78,14 +80,21 @@ def policy_gradient(is_train=True):
                                                                                  np.around(rewards_vec, 3)))
             # 在这个问题里面，我觉得不能把20分以前的全部拿来训练，应该是reward大于0也就是没有失球的拿来训练
             # 先打印一下每次的reward变化规律, 实时证明每次reward为-1之后，这就得训练了，reward为-1我就看错你死掉了，因为你失球了
-            print('reward: ', reward)
+            # we must process reward as reward from system is 0 no matter which attempts
+            # we using reward = attempts_count / 10000 assume max attempts is 10000
+            if reward == 0:
+                reward_converted = attempts_count / 100
+            else:
+                reward_converted = - attempts_count / 100
+            print('reward: ', reward_converted)
+
             env.render()
             observation = observation_
 
             # ====== Q Learning Policy Update Rewards ============
             past_rewards = np.asarray([b[2] for b in buff.buffer])
-            new_reward = reward + 0.9 * (np.argmax([r[action] for r in past_rewards])
-                                         if len(past_rewards) >= 1 else 0)
+            new_reward = reward_converted + 0.9 * (np.argmax([r[action] for r in past_rewards])
+                                                   if len(past_rewards) >= 1 else 0)
             rewards_vec[action] = new_reward
             buff.add_simple(observation, action, rewards_vec, done)
             attempts_count += 1
@@ -97,7 +106,7 @@ def policy_gradient(is_train=True):
 
                 early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, verbose=1, patience=2)
                 try:
-                    model.fit(states, rewards, epochs=epochs, validation_split=0.3, callbacks=[early_stopping])
+                    model.fit(states, rewards, epochs=epochs, validation_split=0.1, callbacks=[early_stopping])
                     model.save_weights(model_save_path)
                 except KeyboardInterrupt:
                     model.save_weights(model_save_path)
@@ -114,6 +123,7 @@ def dummy_show():
     env.seed(1)
     for i in range(3000):
         action = env.action_space.sample()
+        print('action: ', action)
         observation, _, _, _ = env.step(action)
         env.render()
 
