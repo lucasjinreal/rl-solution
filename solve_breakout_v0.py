@@ -96,8 +96,8 @@ def policy_gradient():
     env.seed(1)
     env = env.unwrapped
     print('==== env information:')
-    print(f'action dim: {env.action_space.n}')
-    print(f'observation shape: {env.observation_space.shape}')
+    print('action dim: {}'.format(env.action_space.n))
+    print('observation shape: {}'.format(env.observation_space.shape))
 
     observation_shape = env.observation_space.shape
     n_actions = env.action_space.n
@@ -131,7 +131,7 @@ def policy_gradient():
             else:
                 action = env.action_space.sample()
                 rewards_vec = np.zeros([1, n_actions])[0]
-            print(f'Episode: {i}, Attempt: {c}, action: {action}, rewards_vec: {rewards_vec}')
+            print('Episode: {}, Attempt: {}, action: {}, rewards_vec: {}'.format(i, c, action, rewards_vec))
 
             # action is single int, 0 or 1 or 2 or 3
             # core action !!!!!!
@@ -140,12 +140,12 @@ def policy_gradient():
             if done:
                 # indicates that above actions are all available, if dead then start over again
                 print('-' * 70)
-                print(f'Episode {i} is done, start train this episode.')
-                print(f'collected {len(observations)} samples. {len(observations) == len(rewards)}')
+                print('Episode {} is done, start train this episode.'.format(i))
+                print('collected {} samples. {}'.format(len(observations) ,len(observations) == len(rewards)))
                 model = train_on_memory(model, memory_container, i)
                 print('-' * 70)
                 if i % 500 == 0 and i != 0:
-                    model.save_weights(f'cart_pole_{i}.h5', overwrite=True)
+                    model.save_weights('cart_pole_{}.h5'.format(i), overwrite=True)
                     with open('cart_pole.json', 'w') as f:
                         json.dump(model.to_json(), f)
                     print('model and weights has been saved.')
